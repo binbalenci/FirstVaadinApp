@@ -1,16 +1,25 @@
 package com.example.myfirstvaadinapp;
 
+import java.util.List;
+
 import javax.servlet.annotation.WebServlet;
 
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
+import com.vaadin.icons.VaadinIcons;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
+import com.vaadin.shared.ui.ValueChangeMode;
 import com.vaadin.ui.Button;
-import com.vaadin.ui.Label;
+import com.vaadin.ui.CssLayout;
+import com.vaadin.ui.Grid;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.themes.ValoTheme;
+
+import com.example.myfirstvaadinapp.Customer;
+import com.example.myfirstvaadinapp.CustomerService;
 
 /**
  * This UI is the application entry point. A UI may either represent a browser window 
@@ -22,23 +31,37 @@ import com.vaadin.ui.VerticalLayout;
 @Theme("mytheme")
 public class MyUI extends UI {
 
+	private CustomerService service = CustomerService.getInstance();
+	private Grid<Customer> grid = new Grid<>(Customer.class);
+	private TextField filterText = new TextField();
+	
     @Override
     protected void init(VaadinRequest vaadinRequest) {
         final VerticalLayout layout = new VerticalLayout();
         
-        final TextField name = new TextField();
-        name.setCaption("Type your name here:");
-
-        Button button = new Button("Click Me");
-        button.addClickListener( e -> {
-            layout.addComponent(new Label("Thanks " + name.getValue() 
-                    + ", it works!"));
-        });
+        filterText.setPlaceholder("filter by name...");
+        filterText.addValueChangeListener(e -> updateList());
+        filterText.setValueChangeMode(ValueChangeMode.LAZY);
         
-        layout.addComponents(name, button);
+        Button clearFilterTextBtn = new Button(VaadinIcons.CLOSE);
+        clearFilterTextBtn.setDescription("Clear the current filter");
+        clearFilterTextBtn.addClickListener(e -> filterText.clear());
+        
+        CssLayout filtering = new CssLayout();
+        filtering.addComponents(filterText, clearFilterTextBtn);
+        filtering.setStyleName(ValoTheme.LAYOUT_COMPONENT_GROUP);
+        
+        layout.addComponents(filtering, grid);
+        
+        updateList();
         
         setContent(layout);
     }
+
+	public void updateList() {
+		List<Customer> customer = service.findAll(filterText.getValue());
+        grid.setItems(customer);
+	}
 
     @WebServlet(urlPatterns = "/*", name = "MyUIServlet", asyncSupported = true)
     @VaadinServletConfiguration(ui = MyUI.class, productionMode = false)

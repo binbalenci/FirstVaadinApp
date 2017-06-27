@@ -1,4 +1,4 @@
-package my.vaadin.app;
+package com.example.myfirstvaadinapp;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
