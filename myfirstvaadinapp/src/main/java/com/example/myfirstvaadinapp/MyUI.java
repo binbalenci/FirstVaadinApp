@@ -13,6 +13,8 @@ import com.vaadin.shared.ui.ValueChangeMode;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CssLayout;
 import com.vaadin.ui.Grid;
+import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.HorizontalSplitPanel;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
@@ -34,10 +36,12 @@ public class MyUI extends UI {
 	private CustomerService service = CustomerService.getInstance();
 	private Grid<Customer> grid = new Grid<>(Customer.class);
 	private TextField filterText = new TextField();
+	private CustomerForm form = new CustomerForm(this);
 	
     @Override
     protected void init(VaadinRequest vaadinRequest) {
         final VerticalLayout layout = new VerticalLayout();
+        layout.setWidth("100%");
         
         filterText.setPlaceholder("filter by name...");
         filterText.addValueChangeListener(e -> updateList());
@@ -51,11 +55,33 @@ public class MyUI extends UI {
         filtering.addComponents(filterText, clearFilterTextBtn);
         filtering.setStyleName(ValoTheme.LAYOUT_COMPONENT_GROUP);
         
-        layout.addComponents(filtering, grid);
+        Button addCustomerBtn = new Button("Add new customer");
+        addCustomerBtn.addClickListener(e -> {
+           grid.asSingleSelect().clear();
+           form.setCustomer(new Customer());
+        });
+        
+        HorizontalLayout toolbar = new HorizontalLayout(filtering, addCustomerBtn);
+        
+        HorizontalSplitPanel main = new HorizontalSplitPanel(grid, form);
+        main.setSizeFull();
+        grid.setSizeFull();
+        //main.setExpandRatio(grid, 1);
+
+        layout.addComponents(toolbar, main);
         
         updateList();
         
         setContent(layout);
+        
+        form.setVisible(false);
+        grid.asSingleSelect().addValueChangeListener(e -> {
+            if(e.getValue() == null) {
+                form.setVisible(false);
+            } else {
+                form.setCustomer(e.getValue());
+            }
+        });
     }
 
 	public void updateList() {
